@@ -9,7 +9,7 @@ from pyspark.sql.functions import *
 import logging
 
 ## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME','s3Outputlocation'])
 
 MSG_FORMAT = '%(asctime)s %(levelname)s %(name)s: %(message)s'
 DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S'
@@ -26,6 +26,7 @@ spark = glueContext.spark_session
 
 job = Job(glueContext)
 job.init(args['JOB_NAME'], args)
+s3Outputlocation = args['s3Outputlocation']
 
 tranDyF = glueContext.create_dynamic_frame.from_catalog(database='banking',table_name='transactions')
 acctDyF = glueContext.create_dynamic_frame.from_catalog(database='banking',table_name='accounts')
@@ -79,8 +80,8 @@ uc1DyF = uc1DyF.rename_field("account_name","Account Number")\
 logger.info("Renamed Column names")
     
     
-#glueContext.write_dynamic_frame.from_options(frame = uc1DyF, connection_type = "s3", connection_options={ "path": "s3://<bucket/prefix>/customer_report/", "compressionType":"gzip"}, format_options={"separator":",","withHeader":True,"writeHeader":True}, format="csv")
-glueContext.write_dynamic_frame.from_options(frame = uc1DyF, connection_type = "s3", connection_options={ "path": "s3://<bucket/prefix>/customer_report/"}, format="parquet")
+#glueContext.write_dynamic_frame.from_options(frame = uc1DyF, connection_type = "s3", connection_options={ "path": s3Outputlocation, "compressionType":"gzip"}, format_options={"separator":",","withHeader":True,"writeHeader":True}, format="csv")
+glueContext.write_dynamic_frame.from_options(frame = uc1DyF, connection_type = "s3", connection_options={ "path": s3Outputlocation }, format="parquet")
 
 logger.info("Successfull write to S3")
 
